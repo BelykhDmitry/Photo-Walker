@@ -42,6 +42,6 @@ jobs:
     - name: Archive build reports
       uses: actions/upload-artifact@v3
       with:
-        name: reports_output
+        name: build_output
         path: ./app/build/reports
         retention-days: 1
