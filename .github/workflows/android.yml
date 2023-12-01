@@ -26,7 +26,7 @@ jobs:
       env:
         SUPER_SECRET: ${{ secrets.FLICKR_API_KEY }}
       run: |
-        setup_env.sh "$SUPER_SECRET"
+        ./.github/workflows/setup_env.sh "$SUPER_SECRET"
 
     - name: Build with Gradle
       run: ./gradlew build
