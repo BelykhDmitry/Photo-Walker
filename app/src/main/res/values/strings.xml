@@ -1,0 +1,11 @@
+<resources>
+
+    <string name="flickr_key">FLICKR_API_KEY</string>
+
+    <string name="app_name">Dmitrii-Belykh-Challenge</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="resume">Resume</string>
+    <string name="notification_title">Your walk\'s in progress</string>
+    <string name="notification_message">Tap to see your photo progress</string>
+</resources>
