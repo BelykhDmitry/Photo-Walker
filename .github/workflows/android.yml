@@ -19,8 +19,10 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         cache: gradle
-
+    
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
+      env:
+        FLICKR_API_KEY: ${{ secrets.FLICKR_API_KEY }}
       run: ./gradlew build
