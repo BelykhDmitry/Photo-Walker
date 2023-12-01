@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.fir.declarations.builder.buildField
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,6 +9,11 @@ plugins {
 
 secrets {
     propertiesFileName = "secrets.properties"
+}
+
+detekt {
+    // Temporary, need add baseline first.
+    ignoreFailures = true
 }
 
 android {
