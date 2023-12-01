@@ -31,3 +31,15 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew build
+
+    - name: Archive build output
+      uses: actions/upload-artifact@v3
+      with:
+        name: BuildOutput
+        path: ./app/build/outputs
+
+    - name: Archive build reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: BuildOutput
+        path: ./app/build/reports
