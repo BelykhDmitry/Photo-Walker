@@ -35,11 +35,13 @@ jobs:
     - name: Archive build output
       uses: actions/upload-artifact@v3
       with:
-        name: BuildOutput
+        name: build_output
         path: ./app/build/outputs
+        retention-days: 1
 
     - name: Archive build reports
       uses: actions/upload-artifact@v3
       with:
-        name: BuildOutput
+        name: reports_output
         path: ./app/build/reports
+        retention-days: 1
