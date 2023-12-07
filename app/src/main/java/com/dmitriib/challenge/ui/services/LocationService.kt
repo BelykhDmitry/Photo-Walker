@@ -11,9 +11,12 @@ import androidx.core.app.ServiceCompat
 import com.dmitriib.challenge.ChallengeApplication
 import com.dmitriib.challenge.data.local.LocationItem
 import com.dmitriib.challenge.domain.AddNewLocationUseCase
+import com.dmitriib.challenge.ui.notifications.NotificationUserAction
 import com.dmitriib.challenge.utils.Logger
 
 class LocationService : Service() {
+
+    private var started = false
 
     private val addNewLocationUseCase: AddNewLocationUseCase by lazy {
         (applicationContext as ChallengeApplication).appContainer.addNewLocationUseCase
@@ -26,8 +29,12 @@ class LocationService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        requestLocationUpdates()
-        startForeground()
+        if (!started) {
+            // TODO Subscribe on record status
+            requestLocationUpdates()
+            started = true
+        }
+        startForeground(listOf())
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -35,14 +42,15 @@ class LocationService : Service() {
 
     override fun onDestroy() {
         locationObserver.stopObservingLocation(this)
+        started = false
         super.onDestroy()
     }
 
-    private fun startForeground() {
+    private fun startForeground(actions: List<NotificationUserAction>) {
         val notificationManager = (applicationContext as ChallengeApplication)
             .appContainer
             .notificationManager
-        val notification = notificationManager.createNotification(this)
+        val notification = notificationManager.createNotification(this, actions)
         ServiceCompat.startForeground(this, SERVICE_ID, notification, notificationType)
     }
 
@@ -64,6 +72,7 @@ class LocationService : Service() {
     }
 
     companion object {
+
         private const val SERVICE_ID = 100
         private val notificationType: Int
             get() = if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {

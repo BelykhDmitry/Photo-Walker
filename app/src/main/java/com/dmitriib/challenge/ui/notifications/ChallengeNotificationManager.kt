@@ -1,9 +1,12 @@
 package com.dmitriib.challenge.ui.notifications
 
+import android.Manifest
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
@@ -22,7 +25,7 @@ class ChallengeNotificationManager {
             .createNotificationChannel(channel)
     }
 
-    fun createNotification(context: Context): Notification {
+    fun createNotification(context: Context, actions: List<NotificationUserAction>): Notification {
         val manager = NotificationManagerCompat
             .from(context)
         val channel = manager.getNotificationChannelCompat(CHANNEL_ID)
@@ -42,14 +45,8 @@ class ChallengeNotificationManager {
             Intent(context, LocationService::class.java),
             PendingIntent.FLAG_IMMUTABLE
         )
-//        val actionStopIntent = PendingIntent.getBroadcast(
-//            context,
-//            0,
-//            Intent(context, UserActionsReceiver::class.java).apply { action = "UserCommandStop" },
-//            PendingIntent.FLAG_IMMUTABLE
-//        )
 
-        return notificationBuilder.setOngoing(true)
+        notificationBuilder.setOngoing(true)
             .setContentTitle(context.getString(R.string.notification_title))
             .setContentText(context.getString(R.string.notification_message))
             .setPriority(NotificationManagerCompat.IMPORTANCE_DEFAULT)
@@ -61,8 +58,31 @@ class ChallengeNotificationManager {
             .setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE)
             .setSmallIcon(R.drawable.directions_walk_24px)
             .setSilent(true)
-//            .addAction(0, "Stop", actionStopIntent)
-            .build()
+
+        actions.forEach {
+            val actionIntent = PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(context, UserActionsReceiver::class.java).apply { action = it.actionValue },
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            notificationBuilder.addAction(0, it.getNotificationString(context), actionIntent)
+        }
+
+        return notificationBuilder.build()
+    }
+
+    fun updateNotification(context: Context, actions: List<NotificationUserAction>, id: Int) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val notification = createNotification(context, actions)
+            NotificationManagerCompat
+                .from(context)
+                .notify(id, notification)
+        }
     }
 
     private fun createChannel(): NotificationChannelCompat {

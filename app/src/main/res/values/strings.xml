@@ -6,6 +6,7 @@
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="resume">Resume</string>
+    <string name="pause">Pause</string>
     <string name="notification_title">Your walk\'s in progress</string>
     <string name="notification_message">Tap to see your photo progress</string>
 </resources>

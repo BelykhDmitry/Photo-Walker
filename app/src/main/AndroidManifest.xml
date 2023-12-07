@@ -41,6 +41,16 @@
             android:name="com.dmitriib.challenge.ui.services.LocationService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <receiver android:name="com.dmitriib.challenge.ui.receiver.UserActionsReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="UserCommandStop"/>
+                <action android:name="UserCommandPause"/>
+                <action android:name="UserCommandResume"/>
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
