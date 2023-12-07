@@ -6,8 +6,11 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE
 import androidx.core.app.NotificationManagerCompat
 import com.dmitriib.challenge.MainActivity
+import com.dmitriib.challenge.ui.receiver.UserActionsReceiver
+import com.dmitriib.challenge.ui.services.LocationService
 import com.dmitriib.dmitrii_belykh_challenge.R
 
 class ChallengeNotificationManager {
@@ -33,6 +36,18 @@ class ChallengeNotificationManager {
             intent,
             PendingIntent.FLAG_IMMUTABLE
         )
+        val deleteIntent = PendingIntent.getService(
+            context,
+            0,
+            Intent(context, LocationService::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
+//        val actionStopIntent = PendingIntent.getBroadcast(
+//            context,
+//            0,
+//            Intent(context, UserActionsReceiver::class.java).apply { action = "UserCommandStop" },
+//            PendingIntent.FLAG_IMMUTABLE
+//        )
 
         return notificationBuilder.setOngoing(true)
             .setContentTitle(context.getString(R.string.notification_title))
@@ -42,7 +57,11 @@ class ChallengeNotificationManager {
             .setChannelId(channel.id)
             .setAutoCancel(false)
             .setContentIntent(pendingIntent)
+            .setDeleteIntent(deleteIntent)
+            .setForegroundServiceBehavior(FOREGROUND_SERVICE_IMMEDIATE)
             .setSmallIcon(R.drawable.directions_walk_24px)
+            .setSilent(true)
+//            .addAction(0, "Stop", actionStopIntent)
             .build()
     }
 
