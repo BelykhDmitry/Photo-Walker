@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -32,7 +33,10 @@ class ChallengeNotificationManager {
             ?: createChannel().apply(manager::createNotificationChannel)
 
         val notificationBuilder = NotificationCompat.Builder(context, channel.id)
-        val intent = Intent(context, MainActivity::class.java)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            putExtra(MainActivity.KEY_FROM_SERVICE, true)
+            data = Uri.EMPTY
+        }
         val pendingIntent = PendingIntent.getActivity(
             context,
             ACTIVITY_REQUEST_CODE,

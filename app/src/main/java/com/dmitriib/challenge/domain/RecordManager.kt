@@ -4,27 +4,28 @@ import com.dmitriib.challenge.data.local.RecordItem
 import com.dmitriib.challenge.data.local.RecordItemDao
 import com.dmitriib.challenge.utils.AppDispatchers
 import com.dmitriib.challenge.utils.Logger
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import java.lang.Exception
 
 interface RecordManager {
 
     fun getRecordStatusFlow(): Flow<RecordState>
-    fun createRecord()
+    suspend fun createRecordAsync(): RecordItem?
     fun startRecord()
     fun pauseRecord()
     fun resumeRecord()
     fun completeRecord()
+
+    fun getRecordsFlow(): Flow<List<RecordItem>>
 }
 
 class DefaultRecordManager(
@@ -67,23 +68,20 @@ class DefaultRecordManager(
 
     }
 
-    override fun createRecord() {
-        CoroutineScope(appDispatchers.single).launch {
-            val currentState = recordStateFlow.value
-            if (currentState is RecordState.NoCurrent || currentState is RecordState.Completed) {
-                try {
-                    recordItemDao.insert(RecordItem())
-                    val lastRecord = recordItemDao.getLastRecord()
-                    recordStateFlow.update {
-                        RecordState.Created(
-                            recordId = lastRecord.id,
-                            images = emptyList()
-                        )
-                    }
-                } catch (e: Exception) {
-                    logger.d("Error creating Record", e)
-                }
+    override suspend fun createRecordAsync(): RecordItem? {
+        return try {
+            recordItemDao.insert(RecordItem())
+            val lastRecord = recordItemDao.getLastRecord()
+            recordStateFlow.update {
+                RecordState.Created(
+                    recordId = lastRecord.id,
+                    images = emptyList()
+                )
             }
+            lastRecord
+        } catch (e: Exception) {
+            logger.d("Error creating Record", e)
+            null
         }
     }
 
@@ -113,6 +111,11 @@ class DefaultRecordManager(
             if (it is RecordState.Paused) RecordState.Completed(it.recordId, it.images)
             else it
         }
+    }
+
+    override fun getRecordsFlow(): Flow<List<RecordItem>> {
+        return recordItemDao.getRecords()
+            .flowOn(appDispatchers.io)
     }
 }
 

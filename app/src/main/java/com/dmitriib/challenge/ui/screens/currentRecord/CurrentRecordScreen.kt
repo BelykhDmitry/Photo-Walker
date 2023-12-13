@@ -1,5 +1,8 @@
-package com.dmitriib.challenge.ui.screens
+package com.dmitriib.challenge.ui.screens.currentRecord
 
+import android.content.Context
+import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +20,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -24,17 +33,41 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.dmitriib.dmitrii_belykh_challenge.R
 import com.dmitriib.challenge.domain.ImageInfo
+import com.dmitriib.challenge.ui.ViewModelProvider
+import com.dmitriib.challenge.ui.services.LocationService
 import com.dmitriib.challenge.ui.theme.DmitriiBelykhChallengeTheme
+
+@Composable
+fun CurrentRecordScreen(
+    id: Int,
+    onReturnBackClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val viewModel: ChallengeMainScreenViewModel = viewModel(
+        factory = ViewModelProvider.Factory(id)
+    )
+    val screenState by viewModel.currentRecordScreenStateFlow.collectAsState()
+
+    BackHandler {
+        if (screenState is CurrentRecordScreenState.Completed ||
+            screenState is CurrentRecordScreenState.Initial) onReturnBackClicked()
+    }
+
+    LocationServiceEffect(screenState)
+
+    RecordScreenContent(viewModel, screenState, modifier)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChallengeMainScreen(
-    screenState: MainScreenState,
-    onTopAppBarAction: (RecordUserAction) -> Unit,
+fun RecordScreenContent(
+    viewModel: ChallengeMainScreenViewModel,
+    screenState: CurrentRecordScreenState,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -43,45 +76,79 @@ fun ChallengeMainScreen(
             TopAppBar(
                 title = {},
                 actions = {
-                    Actions(state = screenState, onClick = onTopAppBarAction)
+                    Actions(state = screenState, onClick = viewModel::onActionButtonClicked)
                 }
             )
         }
     ) { contentPadding ->
         when (screenState) {
-            is MainScreenState.Initial,
-            is MainScreenState.CheckingPermissions,
-            is MainScreenState.RequestingPermissions,
-            MainScreenState.Created ->
+            is CurrentRecordScreenState.Initial,
+            is CurrentRecordScreenState.CheckingPermissions,
+            is CurrentRecordScreenState.RequestingPermissions ->
                 InitialState(Modifier.padding(contentPadding))
-            is MainScreenState.WalkInProgress ->
+            is CurrentRecordScreenState.Started ->
                 PhotoFeed(screenState.images, Modifier.padding(contentPadding))
-            is MainScreenState.WalkPaused ->
+            is CurrentRecordScreenState.Paused ->
                 PhotoFeed(screenState.images, Modifier.padding(contentPadding))
-            is MainScreenState.Stopped -> PhotoFeed(screenState.images, Modifier.padding(contentPadding))
+            is CurrentRecordScreenState.Completed -> PhotoFeed(screenState.images, Modifier.padding(contentPadding))
         }
     }
 }
 
 @Composable
+private fun LocationServiceEffect(state: CurrentRecordScreenState) {
+    // NOTE: doesn't work if service was not started by system.
+    var serviceStarted by rememberSaveable { mutableStateOf(false) }
+    val context: Context = LocalContext.current
+    when (state) {
+//        CurrentRecordScreenState.Created,
+        is CurrentRecordScreenState.Paused,
+        is CurrentRecordScreenState.Started -> if (!serviceStarted) {
+            SideEffect {
+                serviceStarted = true
+                startService(context)
+            }
+        }
+
+        is CurrentRecordScreenState.CheckingPermissions,
+        CurrentRecordScreenState.Initial,
+        is CurrentRecordScreenState.RequestingPermissions,
+        is CurrentRecordScreenState.Completed -> if (serviceStarted) {
+            SideEffect {
+                stopService(context)
+                serviceStarted = false
+            }
+        }
+    }
+}
+
+private fun startService(context: Context) {
+    context.startService(Intent(context, LocationService::class.java))
+}
+
+private fun stopService(context: Context) {
+    context.stopService(Intent(context, LocationService::class.java))
+}
+
+@Composable
 fun Actions(
-    state: MainScreenState,
+    state: CurrentRecordScreenState,
     onClick: (RecordUserAction) -> Unit,
 ) {
     when (state) {
-        is MainScreenState.CheckingPermissions,
-        MainScreenState.Initial,
-        is MainScreenState.RequestingPermissions,
-        is MainScreenState.Stopped -> {
-            ActionButton(R.string.create, { onClick(RecordUserAction.Create) })
-        }
-        MainScreenState.Created -> {
+        is CurrentRecordScreenState.CheckingPermissions,
+        CurrentRecordScreenState.Initial,
+        is CurrentRecordScreenState.RequestingPermissions -> {
             ActionButton(R.string.start, { onClick(RecordUserAction.Start) })
         }
-        is MainScreenState.WalkInProgress -> {
+        is CurrentRecordScreenState.Completed -> { Text(text = "Press back") }
+//        CurrentRecordScreenState.Created -> {
+//
+//        }
+        is CurrentRecordScreenState.Started -> {
             ActionButton(R.string.pause, { onClick(RecordUserAction.Pause) })
         }
-        is MainScreenState.WalkPaused -> {
+        is CurrentRecordScreenState.Paused -> {
             ActionButton(R.string.complete, { onClick(RecordUserAction.Complete) })
             ActionButton(R.string.resume, { onClick(RecordUserAction.Resume) })
         }

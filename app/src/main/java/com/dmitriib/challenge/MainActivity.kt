@@ -1,34 +1,29 @@
 package com.dmitriib.challenge
 
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.dmitriib.challenge.ui.ViewModelProvider
-import com.dmitriib.challenge.ui.screens.ChallengeMainScreen
-import com.dmitriib.challenge.ui.screens.ChallengeMainScreenViewModel
-import com.dmitriib.challenge.ui.screens.MainScreenState
-import com.dmitriib.challenge.ui.services.LocationService
+import com.dmitriib.challenge.ui.screens.currentRecord.CurrentRecordScreen
+import com.dmitriib.challenge.ui.screens.records.RecordsScreen
 import com.dmitriib.challenge.ui.theme.DmitriiBelykhChallengeTheme
+import java.io.Serializable
 
 class MainActivity : ComponentActivity() {
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        Log.d("TEEEST", "new intent: $intent")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,88 +33,39 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val viewModel: ChallengeMainScreenViewModel = viewModel(
-                        factory = ViewModelProvider.Factory
-                    )
-                    val state by viewModel.mainScreenStateFlow.collectAsState()
-                    Log.d("TEEEST", "newState: $state")
-
-                    LocationServiceEffect(state)
-                    PermissionsEffect(
-                        state,
-                        viewModel::checkPermissionsResult,
-                        viewModel::requestPermissionsResult
-                    )
-
-                    ChallengeMainScreen(state, viewModel::onActionButtonClicked)
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun LocationServiceEffect(state: MainScreenState) {
-        // NOTE: doesn't work if service was not started by system.
-        var serviceStarted by rememberSaveable { mutableStateOf(false) }
-        when (state) {
-            MainScreenState.Created,
-            is MainScreenState.WalkPaused,
-            is MainScreenState.WalkInProgress -> if (!serviceStarted) {
-                SideEffect {
-                    serviceStarted = true
-                    startService()
-                }
-            }
-
-            is MainScreenState.CheckingPermissions,
-            MainScreenState.Initial,
-            is MainScreenState.RequestingPermissions,
-            is MainScreenState.Stopped -> if (serviceStarted) {
-                SideEffect {
-                    stopService()
-                    serviceStarted = false
-                }
-            }
-        }
-    }
-
-    private fun startService() {
-        startService(Intent(this, LocationService::class.java))
-    }
-
-    private fun stopService() {
-        stopService(Intent(this, LocationService::class.java))
-    }
-
-    @Composable
-    private fun PermissionsEffect(
-        state: MainScreenState,
-        checkPermissionsResult: (Map<String, Boolean>) -> Unit,
-        requestPermissionResult: (Map<String, Boolean>) -> Unit
-    ) {
-        val launcher = rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions(),
-            requestPermissionResult
-        )
-        when (state) {
-            is MainScreenState.CheckingPermissions -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    state.permissions.associateWith {
-                        (checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED)
+                    val initialState = if (intent.hasExtra(KEY_FROM_SERVICE)) CurrentScreen.Record(0)
+                    else CurrentScreen.Records
+                    Log.d("t", " onCreate intent: $intent")
+                    var currentScreen by rememberSaveable {
+                        mutableStateOf(initialState)
                     }
-                        .let {
-                            checkPermissionsResult(it)
-                        }
-                } else {
-                    checkPermissionsResult(state.permissions.associateWith { true })
+                    when (currentScreen) {
+                        CurrentScreen.Records -> RecordsScreen(
+                            onNewRecord = { id ->
+                                currentScreen = CurrentScreen.Record(id)
+                            },
+                            onRecordClicked = { id ->
+
+                            }
+                        )
+                        is CurrentScreen.Record -> CurrentRecordScreen(
+                            (currentScreen as CurrentScreen.Record).id,
+                            onReturnBackClicked = {
+                                currentScreen = CurrentScreen.Records
+                            }
+                        )
+                    }
                 }
             }
-
-            is MainScreenState.RequestingPermissions -> {
-                SideEffect { launcher.launch(state.permissions.toTypedArray()) }
-            }
-
-            else -> Unit
         }
     }
+
+    companion object {
+        const val KEY_FROM_SERVICE = "from_service"
+    }
+}
+
+sealed interface CurrentScreen : Serializable {
+    data object Records : CurrentScreen
+    data class Record(val id: Int) : CurrentScreen
 }
