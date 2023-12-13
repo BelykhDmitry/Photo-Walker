@@ -60,6 +60,8 @@ class MainActivity : ComponentActivity() {
         // NOTE: doesn't work if service was not started by system.
         var serviceStarted by rememberSaveable { mutableStateOf(false) }
         when (state) {
+            MainScreenState.Created,
+            is MainScreenState.WalkPaused,
             is MainScreenState.WalkInProgress -> if (!serviceStarted) {
                 SideEffect {
                     serviceStarted = true
@@ -70,7 +72,7 @@ class MainActivity : ComponentActivity() {
             is MainScreenState.CheckingPermissions,
             MainScreenState.Initial,
             is MainScreenState.RequestingPermissions,
-            is MainScreenState.WalkPaused -> if (serviceStarted) {
+            is MainScreenState.Stopped -> if (serviceStarted) {
                 SideEffect {
                     stopService()
                     serviceStarted = false

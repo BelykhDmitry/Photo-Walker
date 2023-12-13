@@ -6,6 +6,7 @@ import com.dmitriib.dmitrii_belykh_challenge.R
 enum class NotificationUserAction(
     val actionValue: String
 ) {
+    START("UserCommandStart"),
     PAUSE("UserCommandPause"),
     RESUME("UserCommandResume"),
     STOP("UserCommandStop"),
@@ -21,6 +22,7 @@ fun NotificationUserAction.getNotificationString(context: Context): String {
     return context.getString(when (this) {
         NotificationUserAction.PAUSE -> R.string.pause
         NotificationUserAction.RESUME -> R.string.resume
-        NotificationUserAction.STOP -> R.string.stop
+        NotificationUserAction.STOP -> R.string.complete
+        NotificationUserAction.START -> R.string.start
     })
 }

@@ -34,7 +34,7 @@ import com.dmitriib.challenge.ui.theme.DmitriiBelykhChallengeTheme
 @Composable
 fun ChallengeMainScreen(
     screenState: MainScreenState,
-    onTopAppBarAction: () -> Unit,
+    onTopAppBarAction: (RecordUserAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -43,7 +43,7 @@ fun ChallengeMainScreen(
             TopAppBar(
                 title = {},
                 actions = {
-                    ActionButton(screenState, onTopAppBarAction)
+                    Actions(state = screenState, onClick = onTopAppBarAction)
                 }
             )
         }
@@ -51,29 +51,49 @@ fun ChallengeMainScreen(
         when (screenState) {
             is MainScreenState.Initial,
             is MainScreenState.CheckingPermissions,
-            is MainScreenState.RequestingPermissions ->
+            is MainScreenState.RequestingPermissions,
+            MainScreenState.Created ->
                 InitialState(Modifier.padding(contentPadding))
             is MainScreenState.WalkInProgress ->
                 PhotoFeed(screenState.images, Modifier.padding(contentPadding))
             is MainScreenState.WalkPaused ->
                 PhotoFeed(screenState.images, Modifier.padding(contentPadding))
+            is MainScreenState.Stopped -> PhotoFeed(screenState.images, Modifier.padding(contentPadding))
+        }
+    }
+}
+
+@Composable
+fun Actions(
+    state: MainScreenState,
+    onClick: (RecordUserAction) -> Unit,
+) {
+    when (state) {
+        is MainScreenState.CheckingPermissions,
+        MainScreenState.Initial,
+        is MainScreenState.RequestingPermissions,
+        is MainScreenState.Stopped -> {
+            ActionButton(R.string.create, { onClick(RecordUserAction.Create) })
+        }
+        MainScreenState.Created -> {
+            ActionButton(R.string.start, { onClick(RecordUserAction.Start) })
+        }
+        is MainScreenState.WalkInProgress -> {
+            ActionButton(R.string.pause, { onClick(RecordUserAction.Pause) })
+        }
+        is MainScreenState.WalkPaused -> {
+            ActionButton(R.string.complete, { onClick(RecordUserAction.Complete) })
+            ActionButton(R.string.resume, { onClick(RecordUserAction.Resume) })
         }
     }
 }
 
 @Composable
 fun ActionButton(
-    state: MainScreenState,
+    @StringRes textResource: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    @StringRes val textResource = when (state) {
-        is MainScreenState.CheckingPermissions,
-        MainScreenState.Initial,
-        is MainScreenState.RequestingPermissions -> R.string.start
-        is MainScreenState.WalkInProgress -> R.string.stop
-        is MainScreenState.WalkPaused -> R.string.resume
-    }
     TextButton(
         onClick = onClick,
         modifier = modifier.wrapContentSize()

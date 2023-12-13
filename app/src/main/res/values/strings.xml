@@ -3,8 +3,9 @@
     <string name="flickr_key">FLICKR_API_KEY</string>
 
     <string name="app_name">Dmitrii-Belykh-Challenge</string>
+    <string name="create">Create</string>
     <string name="start">Start</string>
-    <string name="stop">Stop</string>
+    <string name="complete">Complete</string>
     <string name="resume">Resume</string>
     <string name="pause">Pause</string>
     <string name="notification_title">Your walk\'s in progress</string>

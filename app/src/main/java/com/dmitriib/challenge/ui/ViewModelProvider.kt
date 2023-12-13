@@ -14,7 +14,8 @@ object ViewModelProvider {
                 ChallengeMainScreenViewModel(
                     permissionManager,
                     getImagesUseCase,
-                    logger
+                    logger,
+                    recordManager
                 )
             }
         }

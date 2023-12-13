@@ -45,6 +45,7 @@
         <receiver android:name="com.dmitriib.challenge.ui.receiver.UserActionsReceiver"
             android:exported="false" >
             <intent-filter>
+                <action android:name="UserCommandStart"/>
                 <action android:name="UserCommandStop"/>
                 <action android:name="UserCommandPause"/>
                 <action android:name="UserCommandResume"/>

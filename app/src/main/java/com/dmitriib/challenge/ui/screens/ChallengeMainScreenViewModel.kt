@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dmitriib.challenge.domain.GetImagesUseCase
 import com.dmitriib.challenge.domain.ImageInfo
+import com.dmitriib.challenge.domain.RecordManager
 import com.dmitriib.challenge.ui.permissions.PermissionManager
 import com.dmitriib.challenge.utils.Logger
 import kotlinx.coroutines.Job
@@ -13,12 +14,16 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-
 class ChallengeMainScreenViewModel(
     private val permissionManager: PermissionManager,
     private val getImagesUseCase: GetImagesUseCase,
-    private val logger: Logger
+    private val logger: Logger,
+    private val recordManager: RecordManager
 ) : ViewModel() {
+
+    init {
+        recordManager.createRecord()
+    }
 
     private var currentJob: Job? = null
 
@@ -30,7 +35,7 @@ class ChallengeMainScreenViewModel(
     fun checkPermissionsResult(permissions: Map<String, Boolean>) {
         _mainScreenStateFlow.update {
             if (permissionManager.onPermissionResult(permissions)) {
-                resumeWalkState(emptyList())
+                create()
             } else {
                 MainScreenState.RequestingPermissions(
                     permissionManager.getRequiredPermissions()
@@ -42,22 +47,37 @@ class ChallengeMainScreenViewModel(
     fun requestPermissionsResult(permissions: Map<String, Boolean>) {
         _mainScreenStateFlow.update {
             if (permissionManager.onPermissionResult(permissions)) {
-                resumeWalkState(emptyList())
+                create()
             } else {
                 MainScreenState.Initial
             }
         }
     }
 
-    fun onActionButtonClicked() {
+    fun onActionButtonClicked(userAction: RecordUserAction) {
+        reduceUserAction(userAction)
+    }
+
+    private fun reduceUserAction(userAction: RecordUserAction) {
         _mainScreenStateFlow.update { currentState ->
-            when (currentState) {
-                MainScreenState.Initial -> checkPermissionsState()
-                is MainScreenState.WalkInProgress -> pauseWalkState(currentState.images)
-                is MainScreenState.WalkPaused -> resumeWalkState(currentState.images)
-                is MainScreenState.CheckingPermissions,
-                is MainScreenState.RequestingPermissions -> currentState
-            }
+            when (userAction) {
+                RecordUserAction.Create -> when (currentState) {
+                    MainScreenState.Initial,
+                    is MainScreenState.Stopped -> checkPermissionsState()
+                    else -> null
+                }
+                RecordUserAction.Pause -> if (currentState is MainScreenState.WalkInProgress) pauseWalkState(currentState.images) else null
+                RecordUserAction.Resume -> if (currentState is MainScreenState.WalkPaused) resumeWalkState(currentState.images) else null
+                RecordUserAction.Start -> if (currentState is MainScreenState.Created) {
+                    recordManager.startRecord()
+                    resumeWalkState(emptyList())
+                } else null
+                RecordUserAction.Complete -> when (currentState) {
+                    is MainScreenState.WalkInProgress -> stopWalkingState(currentState.images)
+                    is MainScreenState.WalkPaused -> stopWalkingState(currentState.images)
+                    else -> null
+                }
+            } ?: currentState
         }
     }
 
@@ -67,14 +87,27 @@ class ChallengeMainScreenViewModel(
         )
     }
 
+    private fun create(): MainScreenState {
+        recordManager.createRecord()
+        return MainScreenState.Created
+    }
+
     private fun pauseWalkState(images: List<ImageInfo>): MainScreenState {
         currentJob?.cancel()
+        recordManager.pauseRecord()
         return MainScreenState.WalkPaused(images)
     }
 
     private fun resumeWalkState(images: List<ImageInfo>): MainScreenState {
         startObserving()
+        recordManager.resumeRecord()
         return MainScreenState.WalkInProgress(images)
+    }
+
+    private fun stopWalkingState(images: List<ImageInfo>): MainScreenState {
+        currentJob?.cancel()
+        recordManager.completeRecord()
+        return MainScreenState.Stopped(images)
     }
 
     private fun startObserving() {
