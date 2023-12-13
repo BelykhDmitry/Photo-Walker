@@ -64,7 +64,7 @@ class LocationService : Service() {
                         is RecordState.Paused -> {
                             locationObserver.stopObservingLocation(this@LocationService)
                             updateNotification(listOf(
-                                NotificationUserAction.STOP,
+                                NotificationUserAction.COMPLETE,
                                 NotificationUserAction.RESUME
                             ))
                         }

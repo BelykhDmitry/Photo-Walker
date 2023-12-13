@@ -9,7 +9,7 @@ enum class NotificationUserAction(
     START("UserCommandStart"),
     PAUSE("UserCommandPause"),
     RESUME("UserCommandResume"),
-    STOP("UserCommandStop"),
+    COMPLETE("UserCommandComplete"),
     ;
 
     companion object {
@@ -22,7 +22,7 @@ fun NotificationUserAction.getNotificationString(context: Context): String {
     return context.getString(when (this) {
         NotificationUserAction.PAUSE -> R.string.pause
         NotificationUserAction.RESUME -> R.string.resume
-        NotificationUserAction.STOP -> R.string.complete
+        NotificationUserAction.COMPLETE -> R.string.complete
         NotificationUserAction.START -> R.string.start
     })
 }

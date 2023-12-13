@@ -18,7 +18,7 @@ class UserActionsReceiver : BroadcastReceiver() {
                 NotificationUserAction.START -> manager.startRecord()
                 NotificationUserAction.PAUSE -> manager.pauseRecord()
                 NotificationUserAction.RESUME -> manager.resumeRecord()
-                NotificationUserAction.STOP -> manager.completeRecord()
+                NotificationUserAction.COMPLETE -> manager.completeRecord()
             }
         }
     }
