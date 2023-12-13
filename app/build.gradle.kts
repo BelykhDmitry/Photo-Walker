@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
     id("io.gitlab.arturbosch.detekt") version "1.23.3"
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    id("androidx.room") version "2.6.0"
 }
 
 secrets {
@@ -30,6 +31,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+        room {
+            schemaDirectory(path = "$projectDir/schemas")
         }
     }
 
@@ -77,6 +81,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     // Room
     implementation("androidx.room:room-runtime:${rootProject.extra["room_version"]}")
+    annotationProcessor("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
     ksp("androidx.room:room-compiler:${rootProject.extra["room_version"]}")
     implementation("androidx.room:room-ktx:${rootProject.extra["room_version"]}")
     // GMS
