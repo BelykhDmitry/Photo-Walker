@@ -13,7 +13,7 @@ class AddNewLocationUseCase(
     // NOTE: ensure distance calculation and search radius with location accuracy
     operator fun invoke(newLocation: LocationItem) {
         val localLocation = currentLocation
-        if (localLocation != null) {
+        if (localLocation != null && localLocation.recordId == newLocation.recordId) {
             val distance = locationsUtils.distanceBetween(localLocation, newLocation)
             if (distance != null && distance >= Settings.DISTANCE_BETWEEN_POINTS_METERS) {
                 currentLocation = newLocation

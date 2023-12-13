@@ -2,30 +2,31 @@ package com.dmitriib.challenge.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dmitriib.challenge.domain.GetImagesUseCase
-import com.dmitriib.challenge.domain.ImageInfo
 import com.dmitriib.challenge.domain.RecordManager
+import com.dmitriib.challenge.domain.RecordState
 import com.dmitriib.challenge.ui.permissions.PermissionManager
 import com.dmitriib.challenge.utils.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ChallengeMainScreenViewModel(
     private val permissionManager: PermissionManager,
-    private val getImagesUseCase: GetImagesUseCase,
     private val logger: Logger,
     private val recordManager: RecordManager
 ) : ViewModel() {
 
-    init {
-        recordManager.createRecord()
-    }
+    private var job: Job? = null
 
-    private var currentJob: Job? = null
+    init {
+        job = observeState()
+    }
 
     private val _mainScreenStateFlow: MutableStateFlow<MainScreenState> = MutableStateFlow(
         MainScreenState.Initial
@@ -33,10 +34,10 @@ class ChallengeMainScreenViewModel(
     val mainScreenStateFlow: StateFlow<MainScreenState> = _mainScreenStateFlow
 
     fun checkPermissionsResult(permissions: Map<String, Boolean>) {
-        _mainScreenStateFlow.update {
-            if (permissionManager.onPermissionResult(permissions)) {
-                create()
-            } else {
+        if (permissionManager.onPermissionResult(permissions)) {
+            createRecord()
+        } else {
+            _mainScreenStateFlow.update {
                 MainScreenState.RequestingPermissions(
                     permissionManager.getRequiredPermissions()
                 )
@@ -45,10 +46,10 @@ class ChallengeMainScreenViewModel(
     }
 
     fun requestPermissionsResult(permissions: Map<String, Boolean>) {
-        _mainScreenStateFlow.update {
-            if (permissionManager.onPermissionResult(permissions)) {
-                create()
-            } else {
+        if (permissionManager.onPermissionResult(permissions)) {
+            createRecord()
+        } else {
+            _mainScreenStateFlow.update {
                 MainScreenState.Initial
             }
         }
@@ -59,69 +60,59 @@ class ChallengeMainScreenViewModel(
     }
 
     private fun reduceUserAction(userAction: RecordUserAction) {
-        _mainScreenStateFlow.update { currentState ->
-            when (userAction) {
-                RecordUserAction.Create -> when (currentState) {
-                    MainScreenState.Initial,
-                    is MainScreenState.Stopped -> checkPermissionsState()
-                    else -> null
-                }
-                RecordUserAction.Pause -> if (currentState is MainScreenState.WalkInProgress) pauseWalkState(currentState.images) else null
-                RecordUserAction.Resume -> if (currentState is MainScreenState.WalkPaused) resumeWalkState(currentState.images) else null
-                RecordUserAction.Start -> if (currentState is MainScreenState.Created) {
-                    recordManager.startRecord()
-                    resumeWalkState(emptyList())
-                } else null
-                RecordUserAction.Complete -> when (currentState) {
-                    is MainScreenState.WalkInProgress -> stopWalkingState(currentState.images)
-                    is MainScreenState.WalkPaused -> stopWalkingState(currentState.images)
-                    else -> null
-                }
-            } ?: currentState
+        val currentState = _mainScreenStateFlow.value
+        when (userAction) {
+            RecordUserAction.Create -> when (currentState) {
+                MainScreenState.Initial,
+                is MainScreenState.Stopped -> checkPermissionsState()
+                else -> Unit
+            }
+            RecordUserAction.Pause -> recordManager.pauseRecord()
+            RecordUserAction.Resume -> recordManager.resumeRecord()
+            RecordUserAction.Start -> recordManager.startRecord()
+            RecordUserAction.Complete -> recordManager.completeRecord()
         }
     }
 
-    private fun checkPermissionsState(): MainScreenState {
-        return MainScreenState.CheckingPermissions(
-            permissionManager.getRequiredPermissions()
-        )
+    private fun checkPermissionsState() {
+        _mainScreenStateFlow.update {
+            MainScreenState.CheckingPermissions(
+                permissionManager.getRequiredPermissions()
+            )
+        }
     }
 
-    private fun create(): MainScreenState {
+    private fun createRecord() {
         recordManager.createRecord()
-        return MainScreenState.Created
     }
 
-    private fun pauseWalkState(images: List<ImageInfo>): MainScreenState {
-        currentJob?.cancel()
-        recordManager.pauseRecord()
-        return MainScreenState.WalkPaused(images)
-    }
-
-    private fun resumeWalkState(images: List<ImageInfo>): MainScreenState {
-        startObserving()
-        recordManager.resumeRecord()
-        return MainScreenState.WalkInProgress(images)
-    }
-
-    private fun stopWalkingState(images: List<ImageInfo>): MainScreenState {
-        currentJob?.cancel()
-        recordManager.completeRecord()
-        return MainScreenState.Stopped(images)
-    }
-
-    private fun startObserving() {
-        currentJob = viewModelScope.launch {
-            getImagesUseCase()
+    private fun observeState(): Job {
+        return viewModelScope.launch {
+            recordManager.getRecordStatusFlow()
+                .onStart {
+                    logger.d("VM: on start")
+                }
+                .onCompletion {
+                    logger.d("VM: on complete")
+                }
+                .onEach {
+                    logger.d("new state before all $it")
+                }
                 .catch { t ->
-                    logger.d("Error occurred while observing Images", t)
+                    logger.d("Error occurred while observing record status", t)
+                }.collect { state ->
+                    logger.d("On new state: $state")
+                    val newState = when (state) {
+                        is RecordState.Completed -> MainScreenState.Stopped(state.images)
+                        is RecordState.Created -> MainScreenState.Created
+                        is RecordState.NoCurrent -> MainScreenState.Initial
+                        is RecordState.Paused -> MainScreenState.WalkPaused(state.images)
+                        is RecordState.Started -> MainScreenState.WalkInProgress(state.images)
+                    }
+                    _mainScreenStateFlow.update {
+                        newState
+                    }
                 }
-                .collect { images ->
-                _mainScreenStateFlow.update { state ->
-                    (state as? MainScreenState.WalkInProgress)?.copy(images = images)
-                        ?: state
-                }
-            }
         }
     }
 }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 interface LocationRepository {
     fun addNewLocation(newLocation: LocationItem)
     fun getLocations(): Flow<List<LocationItem>>
+    fun getLocations(recordId: Int): Flow<List<LocationItem>>
 }
 
 class DefaultLocationRepository(
@@ -45,6 +46,12 @@ class DefaultLocationRepository(
     override fun getLocations(): Flow<List<LocationItem>> {
         return locationItemDao
             .getItems()
+            .flowOn(dispatchers.io)
+    }
+
+    override fun getLocations(recordId: Int): Flow<List<LocationItem>> {
+        return locationItemDao
+            .getItems(recordId)
             .flowOn(dispatchers.io)
     }
 }

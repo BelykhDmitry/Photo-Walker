@@ -25,6 +25,7 @@ class LocationService : Service() {
 
     private var started = false
     private var lastActions = emptyList<NotificationUserAction>()
+    private var currentRecordId: Int = NO_RECORD_ID
 
     private val addNewLocationUseCase: AddNewLocationUseCase by lazy {
         (applicationContext as ChallengeApplication).appContainer.addNewLocationUseCase
@@ -55,13 +56,16 @@ class LocationService : Service() {
                 recordManager.getRecordStatusFlow().collect { state ->
                     when (state) {
                         is RecordState.Completed -> {
+                            currentRecordId = state.recordId
                             locationObserver.stopObservingLocation(this@LocationService)
                             stopSelf()
                         }
                         is RecordState.Created -> {
+                            currentRecordId = state.recordId
                             updateNotification(listOf(NotificationUserAction.START))
                         }
                         is RecordState.Paused -> {
+                            currentRecordId = state.recordId
                             locationObserver.stopObservingLocation(this@LocationService)
                             updateNotification(listOf(
                                 NotificationUserAction.COMPLETE,
@@ -69,12 +73,15 @@ class LocationService : Service() {
                             ))
                         }
                         is RecordState.Started -> {
+                            currentRecordId = state.recordId
                             requestLocationUpdates()
                             updateNotification(listOf(
                                 NotificationUserAction.PAUSE
                             ))
                         }
-                        else -> Unit
+                        is RecordState.NoCurrent -> {
+                            currentRecordId = state.recordId
+                        }
                     }
                 }
             }
@@ -119,7 +126,8 @@ class LocationService : Service() {
             LocationItem(
                 lat = location.latitude,
                 lon = location.longitude,
-                time = location.time
+                time = location.time,
+                recordId = currentRecordId
             )
         )
     }
@@ -127,6 +135,7 @@ class LocationService : Service() {
     companion object {
 
         private const val SERVICE_ID = 100
+        private const val NO_RECORD_ID = -1
         private val notificationType: Int
             get() = if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION

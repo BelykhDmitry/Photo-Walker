@@ -13,7 +13,6 @@ object ViewModelProvider {
             with(application().appContainer) {
                 ChallengeMainScreenViewModel(
                     permissionManager,
-                    getImagesUseCase,
                     logger,
                     recordManager
                 )

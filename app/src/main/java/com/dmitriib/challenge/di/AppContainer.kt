@@ -75,7 +75,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         AddNewLocationUseCase(locationRepository, locationsUtils)
     }
     override val getImagesUseCase: GetImagesUseCase by lazy {
-        GetFlickrImagesUseCase(locationRepository, imagesRepository, dispatchers)
+        GetFlickrImagesUseCase(locationRepository, imagesRepository, dispatchers, logger)
     }
     override val locationObserver: LocationObserver by lazy {
         LocationObserver.createInstance(context, Executors.newSingleThreadExecutor(), logger)
@@ -89,5 +89,5 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         val apiKey = bundle?.getString(key) ?: ""
         NetworkSettings(apiKey)
     }
-    override val recordManager: RecordManager = DefaultRecordManager()
+    override val recordManager: RecordManager = DefaultRecordManager(getImagesUseCase, locationDatabase.recordItemDao(), dispatchers, logger)
 }

@@ -3,24 +3,30 @@ package com.dmitriib.challenge.domain
 import com.dmitriib.challenge.data.ImagesRepository
 import com.dmitriib.challenge.data.LocationRepository
 import com.dmitriib.challenge.utils.AppDispatchers
+import com.dmitriib.challenge.utils.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 interface GetImagesUseCase {
-    operator fun invoke(): Flow<List<ImageInfo>>
+    operator fun invoke(id: Int): Flow<List<ImageInfo>>
 }
 
 class GetFlickrImagesUseCase(
     private val locationRepository: LocationRepository,
     private val imagesRepository: ImagesRepository,
-    private val dispatchers: AppDispatchers
+    private val dispatchers: AppDispatchers,
+    private val logger: Logger
 ) : GetImagesUseCase {
 
-    override operator fun invoke(): Flow<List<ImageInfo>> = locationRepository.getLocations()
+    override operator fun invoke(id: Int): Flow<List<ImageInfo>> = locationRepository.getLocations(id)
         .map { locations ->
+            logger.d("On locations update: ${locations.joinToString()}")
             imagesRepository.loadImages(locations)
-                .map { ImageInfo(IMAGE_URL.format(it.server, it.id, it.secret)) }
+                .map {
+                    logger.d("On new photo: $it")
+                    ImageInfo(IMAGE_URL.format(it.server, it.id, it.secret))
+                }
         }
         .flowOn(dispatchers.default)
 
