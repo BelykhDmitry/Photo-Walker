@@ -29,11 +29,13 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dmitriib.challenge.data.local.RecordItem
 import com.dmitriib.challenge.ui.ViewModelProvider
+import com.dmitriib.challenge.ui.theme.DmitriiBelykhChallengeTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,13 +120,13 @@ fun RecordsList(
 ) {
     LazyColumn(
         modifier = modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { Spacer(modifier = Modifier.height(8.dp)) }
         items(items) {
             RecordItem(it, { id -> onClick(RecordsUserAction.ItemClick(id)) })
         }
-        item { Spacer(modifier = Modifier.height(16.dp)) }
+        item { Spacer(modifier = Modifier.height(8.dp)) }
     }
 }
 
@@ -163,5 +165,13 @@ fun Fab(
         } else {
             Icon(Icons.Filled.Add, "Floating action button.")
         }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun RecordsScreenPreview() {
+    DmitriiBelykhChallengeTheme {
+        RecordsList(listOf(RecordItem(0), RecordItem(1), RecordItem(2)), {})
     }
 }
