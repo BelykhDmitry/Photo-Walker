@@ -49,6 +49,7 @@ fun CurrentRecordScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: ChallengeMainScreenViewModel = viewModel(
+        key = "$id",
         factory = ViewModelProvider.Factory(id)
     )
     val screenState by viewModel.currentRecordScreenStateFlow.collectAsState()
@@ -74,24 +75,16 @@ fun RecordScreenContent(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = {},
+                title = {
+                        Text(text = "Record #${screenState.recordId}")
+                },
                 actions = {
                     Actions(state = screenState, onClick = viewModel::onActionButtonClicked)
                 }
             )
         }
     ) { contentPadding ->
-        when (screenState) {
-            is CurrentRecordScreenState.Initial,
-            is CurrentRecordScreenState.CheckingPermissions,
-            is CurrentRecordScreenState.RequestingPermissions ->
-                InitialState(Modifier.padding(contentPadding))
-            is CurrentRecordScreenState.Started ->
-                PhotoFeed(screenState.images, Modifier.padding(contentPadding))
-            is CurrentRecordScreenState.Paused ->
-                PhotoFeed(screenState.images, Modifier.padding(contentPadding))
-            is CurrentRecordScreenState.Completed -> PhotoFeed(screenState.images, Modifier.padding(contentPadding))
-        }
+        PhotoFeed(screenState.images, Modifier.padding(contentPadding))
     }
 }
 
@@ -110,7 +103,7 @@ private fun LocationServiceEffect(state: CurrentRecordScreenState, id: Int) {
         }
 
         is CurrentRecordScreenState.CheckingPermissions,
-        CurrentRecordScreenState.Initial,
+        is CurrentRecordScreenState.Initial,
         is CurrentRecordScreenState.RequestingPermissions,
         is CurrentRecordScreenState.Completed -> if (serviceStarted) {
             SideEffect {
@@ -138,7 +131,7 @@ fun Actions(
 ) {
     when (state) {
         is CurrentRecordScreenState.CheckingPermissions,
-        CurrentRecordScreenState.Initial,
+        is CurrentRecordScreenState.Initial,
         is CurrentRecordScreenState.RequestingPermissions -> {
             ActionButton(R.string.start, { onClick(RecordUserAction.Start) })
         }
@@ -165,13 +158,6 @@ fun ActionButton(
     ) {
         Text(text = stringResource(id = textResource))
     }
-}
-
-@Composable
-fun InitialState(
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier.fillMaxSize())
 }
 
 @Composable

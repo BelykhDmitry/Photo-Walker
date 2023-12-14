@@ -6,20 +6,39 @@ import com.dmitriib.challenge.domain.ImageInfo
 // NOTE: Add state for completed walk
 sealed interface CurrentRecordScreenState {
 
-    data object Initial : CurrentRecordScreenState
+    val recordId: Int
+    val images: List<ImageInfo>
+
+    data class Initial(
+        override val images: List<ImageInfo>,
+        override val recordId: Int
+    ) : CurrentRecordScreenState
 
     // Remove permissions from here?
     data class CheckingPermissions(
+        override val images: List<ImageInfo>,
+        override val recordId: Int,
         val permissions: List<String>,
     ) : CurrentRecordScreenState
 
     data class RequestingPermissions(
+        override val images: List<ImageInfo>,
+        override val recordId: Int,
         val permissions: List<String>,
     ) : CurrentRecordScreenState
 
-    data class Started(val images: List<ImageInfo>) : CurrentRecordScreenState
+    data class Started(
+        override val images: List<ImageInfo>,
+        override val recordId: Int
+    ) : CurrentRecordScreenState
 
-    data class Paused(val images: List<ImageInfo>) : CurrentRecordScreenState
+    data class Paused(
+        override val images: List<ImageInfo>,
+        override val recordId: Int
+    ) : CurrentRecordScreenState
 
-    data class Completed(val images: List<ImageInfo>) : CurrentRecordScreenState
+    data class Completed(
+        override val images: List<ImageInfo>,
+        override val recordId: Int
+    ) : CurrentRecordScreenState
 }

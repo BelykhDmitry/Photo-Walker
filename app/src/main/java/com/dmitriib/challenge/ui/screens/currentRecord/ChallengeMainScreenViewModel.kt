@@ -29,7 +29,7 @@ class ChallengeMainScreenViewModel(
     }
 
     private val _currentRecordScreenStateFlow: MutableStateFlow<CurrentRecordScreenState> = MutableStateFlow(
-        CurrentRecordScreenState.Initial
+        CurrentRecordScreenState.Initial(emptyList(), -1)
     )
     val currentRecordScreenStateFlow: StateFlow<CurrentRecordScreenState> = _currentRecordScreenStateFlow
 
@@ -93,10 +93,10 @@ class ChallengeMainScreenViewModel(
                 }.collect { state ->
                     logger.d("On new state: $state")
                     val newState = when (state) {
-                        is RecordState.Completed -> CurrentRecordScreenState.Completed(state.images)
-                        is RecordState.Created -> CurrentRecordScreenState.Initial
-                        is RecordState.Paused -> CurrentRecordScreenState.Paused(state.images)
-                        is RecordState.Started -> CurrentRecordScreenState.Started(state.images)
+                        is RecordState.Completed -> CurrentRecordScreenState.Completed(state.images, state.recordId)
+                        is RecordState.Created -> CurrentRecordScreenState.Initial(state.images, state.recordId)
+                        is RecordState.Paused -> CurrentRecordScreenState.Paused(state.images, state.recordId)
+                        is RecordState.Started -> CurrentRecordScreenState.Started(state.images, state.recordId)
                     }
                     _currentRecordScreenStateFlow.update {
                         newState

@@ -57,7 +57,12 @@ fun RecordsScreen(
 
     if (state is RecordsScreenState.RecordCreated) {
         onNewRecord(state.recordId)
-        viewModel.onUserAction(RecordsUserAction.NewRecordOpened)
+        viewModel.onUserAction(RecordsUserAction.RecordOpened)
+    }
+
+    if (state is RecordsScreenState.OpeningRecord) {
+        onRecordClicked(state.recordId)
+        viewModel.onUserAction(RecordsUserAction.RecordOpened)
     }
 
     Scaffold(

@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = CurrentScreen.Record(id)
                             },
                             onRecordClicked = { id ->
-
+                                currentScreen = CurrentScreen.Record(id)
                             }
                         )
                         is CurrentScreen.Record -> CurrentRecordScreen(

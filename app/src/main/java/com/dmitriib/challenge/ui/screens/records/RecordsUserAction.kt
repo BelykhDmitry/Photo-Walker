@@ -5,5 +5,5 @@ sealed interface RecordsUserAction {
     data object FabClick : RecordsUserAction
     data class CheckPermissionsResult(val permissions: Map<String, Boolean>) : RecordsUserAction
     data class RequestPermissionsResult(val permissions: Map<String, Boolean>) : RecordsUserAction
-    data object NewRecordOpened : RecordsUserAction
+    data object RecordOpened : RecordsUserAction
 }

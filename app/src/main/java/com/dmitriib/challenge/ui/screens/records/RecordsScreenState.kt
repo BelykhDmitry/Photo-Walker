@@ -20,4 +20,6 @@ sealed interface RecordsScreenState {
     data class CreatingNewRecord(override val items: List<RecordItem>) : RecordsScreenState
 
     data class RecordCreated(override val items: List<RecordItem>, val recordId: Int) : RecordsScreenState
+
+    data class OpeningRecord(override val items: List<RecordItem>, val recordId: Int) : RecordsScreenState
 }

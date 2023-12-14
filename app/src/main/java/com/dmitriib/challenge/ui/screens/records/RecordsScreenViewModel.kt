@@ -35,6 +35,7 @@ class RecordsScreenViewModel(
                             is RecordsScreenState.Initial -> it.copy(items = newItems)
                             is RecordsScreenState.RecordCreated ->it.copy(items = newItems)
                             is RecordsScreenState.RequestingPermissions -> it.copy(items = newItems)
+                            is RecordsScreenState.OpeningRecord -> it.copy(items = newItems)
                         }
                     }
                 }
@@ -48,9 +49,11 @@ class RecordsScreenViewModel(
             RecordsUserAction.FabClick -> _mutableRecordsState.update {
                 RecordsScreenState.CheckingPermissions(it.items, permissionManager.getRequiredPermissions())
             }
-            is RecordsUserAction.ItemClick -> {}
+            is RecordsUserAction.ItemClick -> _mutableRecordsState.update {
+                RecordsScreenState.OpeningRecord(it.items, userAction.id)
+            }
             is RecordsUserAction.RequestPermissionsResult -> requestPermissionsResult(userAction.permissions)
-            RecordsUserAction.NewRecordOpened -> _mutableRecordsState.update { RecordsScreenState.Initial(it.items) }
+            RecordsUserAction.RecordOpened -> _mutableRecordsState.update { RecordsScreenState.Initial(it.items) }
         }
     }
 

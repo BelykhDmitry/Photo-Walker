@@ -21,18 +21,6 @@ class DefaultLocationRepository(
     private val logger: Logger
 ) : LocationRepository {
 
-    // NOTE: Workaround at this moment - clear data every App start.
-    // Will be removed with support of multiple routes.
-    init {
-        CoroutineScope(dispatchers.single).launch {
-            try {
-                locationItemDao.clearItems()
-            } catch (t: Throwable) {
-                logger.d("Error clearing table", t)
-            }
-        }
-    }
-
     override fun addNewLocation(newLocation: LocationItem) {
         CoroutineScope(dispatchers.single).launch {
             try {

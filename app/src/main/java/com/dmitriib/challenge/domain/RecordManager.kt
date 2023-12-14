@@ -68,7 +68,12 @@ class RecordManagerImpl(
             .transform { images ->
                 recordStateFlow.update { state ->
                     when (state) {
-                        is RecordState.Created -> state
+                        // TODO: workaround until read status from DB
+                        is RecordState.Created -> if (images.isNotEmpty()) {
+                            RecordState.Completed(state.recordId, images)
+                        } else {
+                            state
+                        }
                         is RecordState.Completed -> state.copy(images = images)
                         is RecordState.Paused -> state.copy(images = images)
                         is RecordState.Started -> state.copy(images = images)
