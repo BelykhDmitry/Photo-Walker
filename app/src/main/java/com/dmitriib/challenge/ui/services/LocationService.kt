@@ -11,6 +11,7 @@ import androidx.core.app.ServiceCompat
 import com.dmitriib.challenge.ChallengeApplication
 import com.dmitriib.challenge.data.local.LocationItem
 import com.dmitriib.challenge.domain.AddNewLocationUseCase
+import com.dmitriib.challenge.domain.RecordManager
 import com.dmitriib.challenge.domain.RecordManagerFactory
 import com.dmitriib.challenge.domain.RecordState
 import com.dmitriib.challenge.ui.notifications.ChallengeNotificationManager
@@ -18,13 +19,16 @@ import com.dmitriib.challenge.ui.notifications.NotificationUserAction
 import com.dmitriib.challenge.utils.AppDispatchers
 import com.dmitriib.challenge.utils.Logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
 
 class LocationService : Service() {
 
     private var started = false
     private var lastActions = emptyList<NotificationUserAction>()
+    @Volatile
     private var currentRecordId: Int = NO_RECORD_ID
 
     private val addNewLocationUseCase: AddNewLocationUseCase by lazy {
@@ -42,18 +46,19 @@ class LocationService : Service() {
     private val appDispatchers: AppDispatchers by lazy {
         (applicationContext as ChallengeApplication).appContainer.dispatchers
     }
-    private val scope by lazy {  CoroutineScope(appDispatchers.main) }
+    private val scope by lazy { CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher()) }
     private val notificationManager: ChallengeNotificationManager by lazy {
         (applicationContext as ChallengeApplication)
             .appContainer
             .notificationManager
     }
+    private var recordManager: RecordManager? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // TODO: handle case with recordId change (In current workflow it is impossible)
         if (!started) {
-            currentRecordId = intent?.extras?.getInt(KEY_RECORD_ID) ?: -1
             scope.launch {
+                // TODO: Maybe collect to a local state?
                 recordManagerFactory.create(currentRecordId).getRecordStatusFlow().collect { state ->
                     when (state) {
                         is RecordState.Completed -> {
@@ -85,6 +90,10 @@ class LocationService : Service() {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    private fun getRecordId(): Int {
+        return currentRecordId
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
@@ -95,7 +104,7 @@ class LocationService : Service() {
     }
 
     private fun startForeground() {
-        val notification = notificationManager.createNotification(this, lastActions)
+        val notification = notificationManager.createNotification(this, lastActions, getRecordId())
         ServiceCompat.startForeground(this, SERVICE_ID, notification, notificationType)
     }
 
@@ -104,7 +113,8 @@ class LocationService : Service() {
         notificationManager.updateNotification(
             this,
             actions,
-            SERVICE_ID
+            SERVICE_ID,
+            getRecordId()
         )
     }
 

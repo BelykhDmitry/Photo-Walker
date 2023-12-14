@@ -19,12 +19,13 @@ import kotlinx.coroutines.launch
 class ChallengeMainScreenViewModel(
     private val permissionManager: PermissionManager,
     private val logger: Logger,
-    private val recordManager: RecordManager
+    private val recordManager: RecordManager,
 ) : ViewModel() {
 
     private var job: Job? = null
 
     init {
+        logger.d("View Model created $this")
         job = observeState()
     }
 

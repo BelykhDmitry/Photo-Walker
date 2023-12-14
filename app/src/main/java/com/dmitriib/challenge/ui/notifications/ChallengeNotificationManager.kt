@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Bundle
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -26,7 +27,11 @@ class ChallengeNotificationManager {
             .createNotificationChannel(channel)
     }
 
-    fun createNotification(context: Context, actions: List<NotificationUserAction>): Notification {
+    fun createNotification(
+        context: Context,
+        actions: List<NotificationUserAction>,
+        currentRecordId: Int
+    ): Notification {
         val manager = NotificationManagerCompat
             .from(context)
         val channel = manager.getNotificationChannelCompat(CHANNEL_ID)
@@ -34,7 +39,7 @@ class ChallengeNotificationManager {
 
         val notificationBuilder = NotificationCompat.Builder(context, channel.id)
         val intent = Intent(context, MainActivity::class.java).apply {
-            putExtra(MainActivity.KEY_FROM_SERVICE, true)
+            putExtras(Bundle().apply { putInt(MainActivity.KEY_FROM_SERVICE, currentRecordId) })
             data = Uri.EMPTY
         }
         val pendingIntent = PendingIntent.getActivity(
@@ -63,30 +68,33 @@ class ChallengeNotificationManager {
             .setSmallIcon(R.drawable.directions_walk_24px)
             .setSilent(true)
 
-        actions.forEach {
-            val actionIntent = Intent(context, UserActionsReceiver::class.java).also(it::writeToIntent)
+        actions.forEach { action ->
+            val actionIntent = Intent().also {
+                action.writeToIntent(it)
+                it.setClass(context, UserActionsReceiver::class.java)
+            }
             val actionPendingIntent = PendingIntent.getBroadcast(
                 context,
                 0,
                 actionIntent,
                 PendingIntent.FLAG_IMMUTABLE
             )
-            notificationBuilder.addAction(0, it.getNotificationString(context), actionPendingIntent)
+            notificationBuilder.addAction(0, action.getNotificationString(context), actionPendingIntent)
         }
 
         return notificationBuilder.build()
     }
 
-    fun updateNotification(context: Context, actions: List<NotificationUserAction>, id: Int) {
+    fun updateNotification(context: Context, actions: List<NotificationUserAction>, notificationId: Int, currentRecordId: Int) {
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            val notification = createNotification(context, actions)
+            val notification = createNotification(context, actions, currentRecordId)
             NotificationManagerCompat
                 .from(context)
-                .notify(id, notification)
+                .notify(notificationId, notification)
         }
     }
 

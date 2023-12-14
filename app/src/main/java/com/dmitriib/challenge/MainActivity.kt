@@ -8,13 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import com.dmitriib.challenge.ui.screens.currentRecord.CurrentRecordScreen
-import com.dmitriib.challenge.ui.screens.records.RecordsScreen
+import androidx.navigation.compose.rememberNavController
 import com.dmitriib.challenge.ui.theme.DmitriiBelykhChallengeTheme
 import java.io.Serializable
 
@@ -33,27 +29,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val initialState = if (intent.hasExtra(KEY_FROM_SERVICE)) CurrentScreen.Record(0)
-                    else CurrentScreen.Records
-                    Log.d("t", " onCreate intent: $intent")
-                    var currentScreen by rememberSaveable {
-                        mutableStateOf(initialState)
+
+                    val navController = rememberNavController()
+                    val navActions = remember(navController) {
+                        NavigationActions(navController)
                     }
-                    when (currentScreen) {
-                        CurrentScreen.Records -> RecordsScreen(
-                            onNewRecord = { id ->
-                                currentScreen = CurrentScreen.Record(id)
-                            },
-                            onRecordClicked = { id ->
-                                currentScreen = CurrentScreen.Record(id)
-                            }
-                        )
-                        is CurrentScreen.Record -> CurrentRecordScreen(
-                            (currentScreen as CurrentScreen.Record).id,
-                            onReturnBackClicked = {
-                                currentScreen = CurrentScreen.Records
-                            }
-                        )
+                    NavGraph(navController = navController, navActions = navActions)
+                    if (savedInstanceState == null &&
+                        intent.hasExtra(KEY_FROM_SERVICE)) {
+                        navActions.navigateToCurrentRecord(intent.getIntExtra(KEY_FROM_SERVICE, -1))
                     }
                 }
             }
@@ -63,9 +47,4 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val KEY_FROM_SERVICE = "from_service"
     }
-}
-
-sealed interface CurrentScreen : Serializable {
-    data object Records : CurrentScreen
-    data class Record(val id: Int) : CurrentScreen
 }

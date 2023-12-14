@@ -44,13 +44,11 @@ import com.dmitriib.challenge.ui.theme.DmitriiBelykhChallengeTheme
 
 @Composable
 fun CurrentRecordScreen(
-    id: Int,
     onReturnBackClicked: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel: ChallengeMainScreenViewModel = viewModel(
-        key = "$id",
-        factory = ViewModelProvider.Factory(id)
+        factory = ViewModelProvider.Factory
     )
     val screenState by viewModel.currentRecordScreenStateFlow.collectAsState()
 
@@ -59,7 +57,7 @@ fun CurrentRecordScreen(
             screenState is CurrentRecordScreenState.Initial) onReturnBackClicked()
     }
 
-    LocationServiceEffect(screenState, id)
+    LocationServiceEffect(screenState, screenState.recordId)
 
     RecordScreenContent(viewModel, screenState, modifier)
 }

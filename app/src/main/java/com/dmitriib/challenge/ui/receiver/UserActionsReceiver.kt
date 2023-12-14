@@ -6,11 +6,13 @@ import android.content.Intent
 import com.dmitriib.challenge.ChallengeApplication
 import com.dmitriib.challenge.ui.notifications.NotificationUserAction
 import com.dmitriib.challenge.ui.notifications.NotificationUserAction.Companion.readUserAction
+import com.dmitriib.challenge.utils.ConsoleLogger
 
 class UserActionsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val userAction = intent.readUserAction()
+        ConsoleLogger().d("Received $userAction from $intent")
         userAction?.let {
             val manager = (context.applicationContext as ChallengeApplication)
                 .appContainer

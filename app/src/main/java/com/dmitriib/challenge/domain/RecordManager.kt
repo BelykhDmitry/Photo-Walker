@@ -89,12 +89,11 @@ class RecordManagerFactory(
     private val appDispatchers: AppDispatchers,
     private val logger: Logger
 ) {
-    // Need memory usage optimization. Add size limit, remove oldest?
-    private val managers: MutableMap<Int, RecordManager> = mutableMapOf()
+    private var lastPair: Pair<Int, RecordManager>? = null
 
     fun create(id: Int): RecordManager {
-        return managers[id] ?: RecordManagerImpl(id, getImagesUseCase, appDispatchers, logger).also {
-            managers[id] = it
+        return lastPair?.takeIf { it.first == id }?.second ?: RecordManagerImpl(id, getImagesUseCase, appDispatchers, logger).also {
+            lastPair = id to it
         }
     }
 }

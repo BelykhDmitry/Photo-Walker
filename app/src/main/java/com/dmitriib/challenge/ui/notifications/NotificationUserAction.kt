@@ -11,10 +11,10 @@ sealed class NotificationUserAction(
 ) {
     abstract val recordId: Int
 
-    data class Start(override val recordId: Int) : NotificationUserAction("UserCommandStart")
-    data class Pause(override val recordId: Int) : NotificationUserAction("UserCommandPause")
-    data class Resume(override val recordId: Int) : NotificationUserAction("UserCommandResume")
-    data class Complete(override val recordId: Int) : NotificationUserAction("UserCommandComplete")
+    data class Start(override val recordId: Int) : NotificationUserAction("com.dmitriib.challenge.USER_COMMAND_START")
+    data class Pause(override val recordId: Int) : NotificationUserAction("com.dmitriib.challenge.USER_COMMAND_PAUSE")
+    data class Resume(override val recordId: Int) : NotificationUserAction("com.dmitriib.challenge.USER_COMMAND_RESUME")
+    data class Complete(override val recordId: Int) : NotificationUserAction("com.dmitriib.challenge.USER_COMMAND_COMPLETE")
 
     fun writeToIntent(intent: Intent) = with(intent) {
         action = actionValue
@@ -27,10 +27,10 @@ sealed class NotificationUserAction(
         fun Intent.readUserAction(): NotificationUserAction? {
             val id = getIntExtra(RECORD_ID_KEY, -1)
             return when (action) {
-                "UserCommandStart" -> Start(id)
-                "UserCommandPause" -> Pause(id)
-                "UserCommandResume" -> Resume(id)
-                "UserCommandComplete" -> Complete(id)
+                "com.dmitriib.challenge.USER_COMMAND_START" -> Start(id)
+                "com.dmitriib.challenge.USER_COMMAND_PAUSE" -> Pause(id)
+                "com.dmitriib.challenge.USER_COMMAND_RESUME" -> Resume(id)
+                "com.dmitriib.challenge.USER_COMMAND_COMPLETE" -> Complete(id)
                 else -> null
             }
         }

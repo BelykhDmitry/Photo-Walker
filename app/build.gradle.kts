@@ -69,6 +69,7 @@ android {
 }
 
 dependencies {
+    val nav_version = "2.7.6"
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
@@ -96,6 +97,13 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     // Coil
     implementation("io.coil-kt:coil-compose:2.4.0")
+
+    // Navigation
+    // Kotlin
+    implementation("androidx.navigation:navigation-fragment-ktx:$nav_version")
+    implementation("androidx.navigation:navigation-ui-ktx:$nav_version")
+    // Jetpack Compose Integration
+    implementation("androidx.navigation:navigation-compose:$nav_version")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1")

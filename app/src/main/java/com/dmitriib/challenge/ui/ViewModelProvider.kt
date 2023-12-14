@@ -1,16 +1,19 @@
 package com.dmitriib.challenge.ui
 
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.dmitriib.challenge.ChallengeApplication
+import com.dmitriib.challenge.DestinationArgs
 import com.dmitriib.challenge.ui.screens.currentRecord.ChallengeMainScreenViewModel
 import com.dmitriib.challenge.ui.screens.records.RecordsScreenViewModel
 
 object ViewModelProvider {
-    fun Factory(id: Int) = viewModelFactory {
+    val Factory = viewModelFactory {
         initializer {
+            val id = createSavedStateHandle().get<String>(DestinationArgs.RECORD_ID_ARG)!!.toInt()
             with(application().appContainer) {
                 ChallengeMainScreenViewModel(
                     permissionManager,

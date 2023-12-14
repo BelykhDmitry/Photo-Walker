@@ -45,10 +45,10 @@
         <receiver android:name="com.dmitriib.challenge.ui.receiver.UserActionsReceiver"
             android:exported="false" >
             <intent-filter>
-                <action android:name="UserCommandStart"/>
-                <action android:name="UserCommandComplete"/>
-                <action android:name="UserCommandPause"/>
-                <action android:name="UserCommandResume"/>
+                <action android:name="com.dmitriib.challenge.USER_COMMAND_START"/>
+                <action android:name="com.dmitriib.challenge.USER_COMMAND_COMPLETE"/>
+                <action android:name="com.dmitriib.challenge.USER_COMMAND_PAUSE"/>
+                <action android:name="com.dmitriib.challenge.USER_COMMAND_RESUME"/>
             </intent-filter>
         </receiver>
 
