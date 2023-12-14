@@ -13,10 +13,9 @@ object ViewModelProvider {
         initializer {
             with(application().appContainer) {
                 ChallengeMainScreenViewModel(
-                    id,
                     permissionManager,
                     logger,
-                    recordManager
+                    recordManagerFactory.create(id)
                 )
             }
         }
@@ -27,7 +26,7 @@ object ViewModelProvider {
                 RecordsScreenViewModel(
                     permissionManager,
                     logger,
-                    recordManager
+                    recordsRepository
                 )
             }
         }

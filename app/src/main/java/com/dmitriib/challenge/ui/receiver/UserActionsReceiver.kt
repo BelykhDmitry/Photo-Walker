@@ -5,20 +5,22 @@ import android.content.Context
 import android.content.Intent
 import com.dmitriib.challenge.ChallengeApplication
 import com.dmitriib.challenge.ui.notifications.NotificationUserAction
+import com.dmitriib.challenge.ui.notifications.NotificationUserAction.Companion.readUserAction
 
 class UserActionsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val userAction = intent.action?.let(NotificationUserAction::valueOfOrNull)
+        val userAction = intent.readUserAction()
         userAction?.let {
             val manager = (context.applicationContext as ChallengeApplication)
                 .appContainer
-                .recordManager
+                .recordManagerFactory
+                .create(it.recordId)
             when (it) {
-                NotificationUserAction.START -> manager.startRecord()
-                NotificationUserAction.PAUSE -> manager.pauseRecord()
-                NotificationUserAction.RESUME -> manager.resumeRecord()
-                NotificationUserAction.COMPLETE -> manager.completeRecord()
+                is NotificationUserAction.Start -> manager.startRecord()
+                is NotificationUserAction.Pause -> manager.pauseRecord()
+                is NotificationUserAction.Resume -> manager.resumeRecord()
+                is NotificationUserAction.Complete -> manager.completeRecord()
             }
         }
     }

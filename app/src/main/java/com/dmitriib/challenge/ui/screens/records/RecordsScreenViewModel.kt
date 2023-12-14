@@ -2,7 +2,7 @@ package com.dmitriib.challenge.ui.screens.records
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dmitriib.challenge.domain.RecordManager
+import com.dmitriib.challenge.data.RecordsRepository
 import com.dmitriib.challenge.ui.permissions.PermissionManager
 import com.dmitriib.challenge.utils.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 class RecordsScreenViewModel(
     private val permissionManager: PermissionManager,
     private val logger: Logger,
-    private val recordManager: RecordManager
+    private val recordsRepository: RecordsRepository
 ) : ViewModel() {
 
     private val _mutableRecordsState = MutableStateFlow<RecordsScreenState>(RecordsScreenState.Initial(emptyList()))
@@ -23,7 +23,7 @@ class RecordsScreenViewModel(
 
     init {
         viewModelScope.launch {
-            recordManager.getRecordsFlow()
+            recordsRepository.getRecordsFlow()
                 .catch { t ->
                     logger.d("Some Error in records list", t)
                 }
@@ -79,7 +79,7 @@ class RecordsScreenViewModel(
             RecordsScreenState.CreatingNewRecord(it.items)
         }
         viewModelScope.launch {
-            val record = recordManager.createRecordAsync()
+            val record = recordsRepository.createRecordAsync()
             _mutableRecordsState.update {
                 if (record != null) {
                     RecordsScreenState.RecordCreated(it.items, record.id)

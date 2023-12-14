@@ -11,7 +11,7 @@ import androidx.core.app.ServiceCompat
 import com.dmitriib.challenge.ChallengeApplication
 import com.dmitriib.challenge.data.local.LocationItem
 import com.dmitriib.challenge.domain.AddNewLocationUseCase
-import com.dmitriib.challenge.domain.RecordManager
+import com.dmitriib.challenge.domain.RecordManagerFactory
 import com.dmitriib.challenge.domain.RecordState
 import com.dmitriib.challenge.ui.notifications.ChallengeNotificationManager
 import com.dmitriib.challenge.ui.notifications.NotificationUserAction
@@ -36,8 +36,8 @@ class LocationService : Service() {
     private val locationObserver: LocationObserver by lazy {
         (applicationContext as ChallengeApplication).appContainer.locationObserver
     }
-    private val recordManager: RecordManager by lazy {
-        (applicationContext as ChallengeApplication).appContainer.recordManager
+    private val recordManagerFactory: RecordManagerFactory by lazy {
+        (applicationContext as ChallengeApplication).appContainer.recordManagerFactory
     }
     private val appDispatchers: AppDispatchers by lazy {
         (applicationContext as ChallengeApplication).appContainer.dispatchers
@@ -49,38 +49,32 @@ class LocationService : Service() {
             .notificationManager
     }
 
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // TODO: handle case with recordId change (In current workflow it is impossible)
         if (!started) {
+            currentRecordId = intent?.extras?.getInt(KEY_RECORD_ID) ?: -1
             scope.launch {
-                recordManager.getRecordStatusFlow().collect { state ->
+                recordManagerFactory.create(currentRecordId).getRecordStatusFlow().collect { state ->
                     when (state) {
                         is RecordState.Completed -> {
-                            currentRecordId = state.recordId
                             locationObserver.stopObservingLocation(this@LocationService)
                             stopSelf()
                         }
                         is RecordState.Created -> {
-                            currentRecordId = state.recordId
-                            updateNotification(listOf(NotificationUserAction.START))
+                            updateNotification(listOf(NotificationUserAction.Start(currentRecordId)))
                         }
                         is RecordState.Paused -> {
-                            currentRecordId = state.recordId
                             locationObserver.stopObservingLocation(this@LocationService)
                             updateNotification(listOf(
-                                NotificationUserAction.COMPLETE,
-                                NotificationUserAction.RESUME
+                                NotificationUserAction.Complete(currentRecordId),
+                                NotificationUserAction.Resume(currentRecordId)
                             ))
                         }
                         is RecordState.Started -> {
-                            currentRecordId = state.recordId
                             requestLocationUpdates()
                             updateNotification(listOf(
-                                NotificationUserAction.PAUSE
+                                NotificationUserAction.Pause(currentRecordId)
                             ))
-                        }
-                        is RecordState.NoCurrent -> {
-                            currentRecordId = state.recordId
                         }
                     }
                 }
@@ -133,7 +127,7 @@ class LocationService : Service() {
     }
 
     companion object {
-
+        const val KEY_RECORD_ID = "key_record_id"
         private const val SERVICE_ID = 100
         private const val NO_RECORD_ID = -1
         private val notificationType: Int

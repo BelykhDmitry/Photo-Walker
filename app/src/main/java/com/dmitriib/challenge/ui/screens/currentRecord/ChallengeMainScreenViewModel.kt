@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ChallengeMainScreenViewModel(
-    private val id: Int,
     private val permissionManager: PermissionManager,
     private val logger: Logger,
     private val recordManager: RecordManager
@@ -34,42 +33,34 @@ class ChallengeMainScreenViewModel(
     )
     val currentRecordScreenStateFlow: StateFlow<CurrentRecordScreenState> = _currentRecordScreenStateFlow
 
-    fun checkPermissionsResult(permissions: Map<String, Boolean>) {
-        if (permissionManager.onPermissionResult(permissions)) {
-            recordManager.startRecord()
-//            createRecord()
-        } else {
-            _currentRecordScreenStateFlow.update {
-                CurrentRecordScreenState.RequestingPermissions(
-                    permissionManager.getRequiredPermissions()
-                )
-            }
-        }
-    }
+//    fun checkPermissionsResult(permissions: Map<String, Boolean>) {
+//        if (permissionManager.onPermissionResult(permissions)) {
+//            recordManager.startRecord()
+//        } else {
+//            _currentRecordScreenStateFlow.update {
+//                CurrentRecordScreenState.RequestingPermissions(
+//                    permissionManager.getRequiredPermissions()
+//                )
+//            }
+//        }
+//    }
 
-    fun requestPermissionsResult(permissions: Map<String, Boolean>) {
-        if (permissionManager.onPermissionResult(permissions)) {
-            recordManager.startRecord()
-//            createRecord()
-        } else {
-            _currentRecordScreenStateFlow.update {
-                CurrentRecordScreenState.Initial
-            }
-        }
-    }
+//    fun requestPermissionsResult(permissions: Map<String, Boolean>) {
+//        if (permissionManager.onPermissionResult(permissions)) {
+//            recordManager.startRecord()
+//        } else {
+//            _currentRecordScreenStateFlow.update {
+//                CurrentRecordScreenState.Initial
+//            }
+//        }
+//    }
 
     fun onActionButtonClicked(userAction: RecordUserAction) {
         reduceUserAction(userAction)
     }
 
     private fun reduceUserAction(userAction: RecordUserAction) {
-        val currentState = _currentRecordScreenStateFlow.value
         when (userAction) {
-            RecordUserAction.Create -> when (currentState) {
-                CurrentRecordScreenState.Initial,
-                is CurrentRecordScreenState.Completed -> checkPermissionsState()
-                else -> Unit
-            }
             RecordUserAction.Pause -> recordManager.pauseRecord()
             RecordUserAction.Resume -> recordManager.resumeRecord()
             RecordUserAction.Start -> recordManager.startRecord()
@@ -77,13 +68,13 @@ class ChallengeMainScreenViewModel(
         }
     }
 
-    private fun checkPermissionsState() {
-        _currentRecordScreenStateFlow.update {
-            CurrentRecordScreenState.CheckingPermissions(
-                permissionManager.getRequiredPermissions()
-            )
-        }
-    }
+//    private fun checkPermissionsState() {
+//        _currentRecordScreenStateFlow.update {
+//            CurrentRecordScreenState.CheckingPermissions(
+//                permissionManager.getRequiredPermissions()
+//            )
+//        }
+//    }
 
     private fun observeState(): Job {
         return viewModelScope.launch {
@@ -104,8 +95,6 @@ class ChallengeMainScreenViewModel(
                     val newState = when (state) {
                         is RecordState.Completed -> CurrentRecordScreenState.Completed(state.images)
                         is RecordState.Created -> CurrentRecordScreenState.Initial
-                        // TODO: remove after refactoring
-                        is RecordState.NoCurrent -> CurrentRecordScreenState.Initial
                         is RecordState.Paused -> CurrentRecordScreenState.Paused(state.images)
                         is RecordState.Started -> CurrentRecordScreenState.Started(state.images)
                     }

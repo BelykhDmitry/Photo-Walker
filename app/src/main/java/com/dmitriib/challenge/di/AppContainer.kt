@@ -12,10 +12,11 @@ import com.dmitriib.challenge.data.local.LocationDatabase
 import com.dmitriib.challenge.data.network.FlickrApiService
 import com.dmitriib.challenge.data.network.RetrofitHelper
 import com.dmitriib.challenge.domain.AddNewLocationUseCase
-import com.dmitriib.challenge.domain.DefaultRecordManager
+import com.dmitriib.challenge.data.DefaultRecordsRepository
 import com.dmitriib.challenge.domain.GetFlickrImagesUseCase
 import com.dmitriib.challenge.domain.GetImagesUseCase
-import com.dmitriib.challenge.domain.RecordManager
+import com.dmitriib.challenge.domain.RecordManagerFactory
+import com.dmitriib.challenge.data.RecordsRepository
 import com.dmitriib.challenge.ui.notifications.ChallengeNotificationManager
 import com.dmitriib.challenge.ui.permissions.LocationServicePermissionManager
 import com.dmitriib.challenge.ui.permissions.PermissionManager
@@ -44,7 +45,8 @@ interface AppContainer {
     val getImagesUseCase: GetImagesUseCase
     val locationObserver: LocationObserver
     val networkSettings: NetworkSettings
-    val recordManager: RecordManager
+    val recordsRepository: RecordsRepository
+    val recordManagerFactory: RecordManagerFactory
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -89,5 +91,6 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         val apiKey = bundle?.getString(key) ?: ""
         NetworkSettings(apiKey)
     }
-    override val recordManager: RecordManager = DefaultRecordManager(getImagesUseCase, locationDatabase.recordItemDao(), dispatchers, logger)
+    override val recordsRepository: RecordsRepository = DefaultRecordsRepository(locationDatabase.recordItemDao(), dispatchers, logger)
+    override val recordManagerFactory: RecordManagerFactory = RecordManagerFactory(getImagesUseCase, dispatchers, logger)
 }

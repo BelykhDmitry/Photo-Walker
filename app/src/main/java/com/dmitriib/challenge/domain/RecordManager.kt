@@ -1,89 +1,32 @@
 package com.dmitriib.challenge.domain
 
-import com.dmitriib.challenge.data.local.RecordItem
-import com.dmitriib.challenge.data.local.RecordItemDao
 import com.dmitriib.challenge.utils.AppDispatchers
 import com.dmitriib.challenge.utils.Logger
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
-import java.lang.Exception
 
 interface RecordManager {
-
-    fun getRecordStatusFlow(): Flow<RecordState>
-    suspend fun createRecordAsync(): RecordItem?
     fun startRecord()
     fun pauseRecord()
     fun resumeRecord()
     fun completeRecord()
 
-    fun getRecordsFlow(): Flow<List<RecordItem>>
+    fun getRecordStatusFlow(): Flow<RecordState>
 }
 
-class DefaultRecordManager(
+class RecordManagerImpl(
+    val recordId: Int,
     private val getImagesUseCase: GetImagesUseCase,
-    private val recordItemDao: RecordItemDao,
     private val appDispatchers: AppDispatchers,
     private val logger: Logger
-) : RecordManager {
+): RecordManager {
 
-    private val recordStateFlow = MutableStateFlow<RecordState>(RecordState.NoCurrent())
-
-    override fun getRecordStatusFlow(): Flow<RecordState> {
-        return recordStateFlow.combine(observeImageInfo()) { state, images ->
-            logger.d("RecordManager:onCombine: $state | $images")
-            state
-        }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun observeImageInfo(): Flow<Unit> {
-        return recordStateFlow.map {
-            it.recordId
-        }.distinctUntilChanged()
-            .flatMapConcat {
-                getImagesUseCase(it)
-                    .transform { images ->
-                        recordStateFlow.update { state ->
-                            when (state) {
-                                is RecordState.NoCurrent,
-                                is RecordState.Created -> state
-                                is RecordState.Completed -> state.copy(images = images)
-                                is RecordState.Paused -> state.copy(images = images)
-                                is RecordState.Started -> state.copy(images = images)
-                            }
-                        }
-                        emit(Unit)
-                    }
-                    .distinctUntilChanged()
-            }
-
-    }
-
-    override suspend fun createRecordAsync(): RecordItem? {
-        return try {
-            recordItemDao.insert(RecordItem())
-            val lastRecord = recordItemDao.getLastRecord()
-            recordStateFlow.update {
-                RecordState.Created(
-                    recordId = lastRecord.id,
-                    images = emptyList()
-                )
-            }
-            lastRecord
-        } catch (e: Exception) {
-            logger.d("Error creating Record", e)
-            null
-        }
-    }
+    private val recordStateFlow = MutableStateFlow<RecordState>(RecordState.Created(recordId, emptyList()))
 
     override fun startRecord() {
         recordStateFlow.update {
@@ -113,18 +56,54 @@ class DefaultRecordManager(
         }
     }
 
-    override fun getRecordsFlow(): Flow<List<RecordItem>> {
-        return recordItemDao.getRecords()
-            .flowOn(appDispatchers.io)
+    override fun getRecordStatusFlow(): Flow<RecordState> {
+        return recordStateFlow.combine(observeImageInfo()) { state, _ ->
+            logger.d("RecordManager:onCombine: $state")
+            state
+        }.flowOn(appDispatchers.single)
+    }
+
+    private fun observeImageInfo(): Flow<Unit> {
+        return getImagesUseCase(recordId)
+            .transform { images ->
+                recordStateFlow.update { state ->
+                    when (state) {
+                        is RecordState.Created -> state
+                        is RecordState.Completed -> state.copy(images = images)
+                        is RecordState.Paused -> state.copy(images = images)
+                        is RecordState.Started -> state.copy(images = images)
+                    }
+                }
+                emit(Unit)
+            }.distinctUntilChanged()
+    }
+}
+
+class RecordManagerFactory(
+    private val getImagesUseCase: GetImagesUseCase,
+    private val appDispatchers: AppDispatchers,
+    private val logger: Logger
+) {
+    // Need memory usage optimization. Add size limit, remove oldest?
+    private val managers: MutableMap<Int, RecordManager> = mutableMapOf()
+
+    fun create(id: Int): RecordManager {
+        return managers[id] ?: RecordManagerImpl(id, getImagesUseCase, appDispatchers, logger).also {
+            managers[id] = it
+        }
     }
 }
 
 sealed interface RecordState {
 
     val recordId: Int
-    data class NoCurrent(override val recordId: Int = -1) : RecordState
-    data class Created(override val recordId: Int, val images: List<ImageInfo>) : RecordState
-    data class Started(override val recordId: Int, val images: List<ImageInfo>) : RecordState
-    data class Paused(override val recordId: Int, val images: List<ImageInfo>) : RecordState
-    data class Completed(override val recordId: Int, val images: List<ImageInfo>) : RecordState
+    val images: List<ImageInfo>
+    data class Created(override val recordId: Int, override val images: List<ImageInfo>) :
+        RecordState
+    data class Started(override val recordId: Int, override val images: List<ImageInfo>) :
+        RecordState
+    data class Paused(override val recordId: Int, override val images: List<ImageInfo>) :
+        RecordState
+    data class Completed(override val recordId: Int, override val images: List<ImageInfo>) :
+        RecordState
 }

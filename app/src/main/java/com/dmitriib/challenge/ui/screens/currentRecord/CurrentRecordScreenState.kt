@@ -8,6 +8,7 @@ sealed interface CurrentRecordScreenState {
 
     data object Initial : CurrentRecordScreenState
 
+    // Remove permissions from here?
     data class CheckingPermissions(
         val permissions: List<String>,
     ) : CurrentRecordScreenState
@@ -15,8 +16,6 @@ sealed interface CurrentRecordScreenState {
     data class RequestingPermissions(
         val permissions: List<String>,
     ) : CurrentRecordScreenState
-
-//    data object Created : CurrentRecordScreenState
 
     data class Started(val images: List<ImageInfo>) : CurrentRecordScreenState
 

@@ -58,7 +58,7 @@ fun CurrentRecordScreen(
             screenState is CurrentRecordScreenState.Initial) onReturnBackClicked()
     }
 
-    LocationServiceEffect(screenState)
+    LocationServiceEffect(screenState, id)
 
     RecordScreenContent(viewModel, screenState, modifier)
 }
@@ -96,17 +96,16 @@ fun RecordScreenContent(
 }
 
 @Composable
-private fun LocationServiceEffect(state: CurrentRecordScreenState) {
+private fun LocationServiceEffect(state: CurrentRecordScreenState, id: Int) {
     // NOTE: doesn't work if service was not started by system.
     var serviceStarted by rememberSaveable { mutableStateOf(false) }
     val context: Context = LocalContext.current
     when (state) {
-//        CurrentRecordScreenState.Created,
         is CurrentRecordScreenState.Paused,
         is CurrentRecordScreenState.Started -> if (!serviceStarted) {
             SideEffect {
                 serviceStarted = true
-                startService(context)
+                startService(context, id)
             }
         }
 
@@ -122,8 +121,10 @@ private fun LocationServiceEffect(state: CurrentRecordScreenState) {
     }
 }
 
-private fun startService(context: Context) {
-    context.startService(Intent(context, LocationService::class.java))
+private fun startService(context: Context, id: Int) {
+    context.startService(Intent(context, LocationService::class.java).apply {
+        putExtra(LocationService.KEY_RECORD_ID, id)
+    })
 }
 
 private fun stopService(context: Context) {
@@ -142,9 +143,6 @@ fun Actions(
             ActionButton(R.string.start, { onClick(RecordUserAction.Start) })
         }
         is CurrentRecordScreenState.Completed -> { Text(text = "Press back") }
-//        CurrentRecordScreenState.Created -> {
-//
-//        }
         is CurrentRecordScreenState.Started -> {
             ActionButton(R.string.pause, { onClick(RecordUserAction.Pause) })
         }

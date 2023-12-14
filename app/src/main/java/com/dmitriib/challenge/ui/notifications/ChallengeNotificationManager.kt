@@ -64,13 +64,14 @@ class ChallengeNotificationManager {
             .setSilent(true)
 
         actions.forEach {
-            val actionIntent = PendingIntent.getBroadcast(
+            val actionIntent = Intent(context, UserActionsReceiver::class.java).also(it::writeToIntent)
+            val actionPendingIntent = PendingIntent.getBroadcast(
                 context,
                 0,
-                Intent(context, UserActionsReceiver::class.java).apply { action = it.actionValue },
+                actionIntent,
                 PendingIntent.FLAG_IMMUTABLE
             )
-            notificationBuilder.addAction(0, it.getNotificationString(context), actionIntent)
+            notificationBuilder.addAction(0, it.getNotificationString(context), actionPendingIntent)
         }
 
         return notificationBuilder.build()
