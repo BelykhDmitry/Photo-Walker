@@ -8,7 +8,7 @@ Tech Plans:
   * Crashlytics
   * Maps (OSM or Google, haven't decided yet)
   * Adopt for different screen sizes
-  * Deeper diving with GitHub CI (how it is only basic build + API KEY selection)
+  * Deeper diving with GitHub CI (now it is only basic build + API KEY selection)
 
 #### Restrictions
 
