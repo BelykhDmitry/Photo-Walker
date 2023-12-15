@@ -3,6 +3,9 @@
 The idea was inspired by Komoot interview test challenge.
 Now it is my playground with usage of modern technologies pushing by Google.
 There are Jetpack Compose, ViewModel, Navigation, Room, Coroutines + Flow, Coil, GitHub CI.
+
+The App uses Flickr API service to get public photo.
+
 Tech Plans:
   * Hilt
   * Crashlytics
