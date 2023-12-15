@@ -18,4 +18,8 @@ class FakeLocationRepository : LocationRepository {
     override fun getLocations(): Flow<List<LocationItem>> {
         return flow
     }
+
+    override fun getLocations(recordId: Int): Flow<List<LocationItem>> {
+        return flow
+    }
 }

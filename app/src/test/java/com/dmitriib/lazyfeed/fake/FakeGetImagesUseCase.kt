@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.emitAll
 
 class FakeGetImagesUseCase : GetImagesUseCase {
     private val flow = MutableSharedFlow<List<ImageInfo>>()
-    override fun invoke(): Flow<List<ImageInfo>> {
+    override fun invoke(id: Int): Flow<List<ImageInfo>> {
         return flow
     }
 
