@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
-        android:name="com.dmitriib.challenge.ChallengeApplication"
+        android:name="com.dmitriib.lazyfeed.ChallengeApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -18,7 +18,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DmitriiBelykhChallenge"
+        android:theme="@style/Theme.LazyFeed"
         tools:targetApi="34">
 
         <meta-data
@@ -26,10 +26,10 @@
             android:value="${FLICKR_API_KEY}" />
 
         <activity
-            android:name="com.dmitriib.challenge.MainActivity"
+            android:name="com.dmitriib.lazyfeed.MainActivity"
             android:exported="true"
             android:launchMode="singleInstance"
-            android:theme="@style/Theme.DmitriiBelykhChallenge">
+            android:theme="@style/Theme.LazyFeed">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -38,17 +38,17 @@
         </activity>
 
         <service
-            android:name="com.dmitriib.challenge.ui.services.LocationService"
+            android:name="com.dmitriib.lazyfeed.ui.services.LocationService"
             android:exported="false"
             android:foregroundServiceType="location" />
 
-        <receiver android:name="com.dmitriib.challenge.ui.receiver.UserActionsReceiver"
+        <receiver android:name="com.dmitriib.lazyfeed.ui.receiver.UserActionsReceiver"
             android:exported="false" >
             <intent-filter>
-                <action android:name="com.dmitriib.challenge.USER_COMMAND_START"/>
-                <action android:name="com.dmitriib.challenge.USER_COMMAND_COMPLETE"/>
-                <action android:name="com.dmitriib.challenge.USER_COMMAND_PAUSE"/>
-                <action android:name="com.dmitriib.challenge.USER_COMMAND_RESUME"/>
+                <action android:name="com.dmitriib.lazyfeed.USER_COMMAND_START"/>
+                <action android:name="com.dmitriib.lazyfeed.USER_COMMAND_COMPLETE"/>
+                <action android:name="com.dmitriib.lazyfeed.USER_COMMAND_PAUSE"/>
+                <action android:name="com.dmitriib.lazyfeed.USER_COMMAND_RESUME"/>
             </intent-filter>
         </receiver>
 

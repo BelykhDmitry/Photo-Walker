@@ -18,11 +18,11 @@ detekt {
 }
 
 android {
-    namespace = "com.dmitriib.dmitrii_belykh_challenge"
+    namespace = "com.dmitriib.lazyfeed"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.dmitriib.dmitrii_belykh_challenge"
+        applicationId = "com.dmitriib.lazyfeed"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
