@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Dmitrii-Belykh-LazyFeed"
+rootProject.name = "LazyFeed"
 include(":app")
  
