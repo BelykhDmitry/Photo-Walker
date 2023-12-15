@@ -2,12 +2,13 @@
 
 The idea was inspired by Komoot interview test challenge.
 Now it is my playground with usage of modern technologies pushing by Google.
-There are Jetpack Compose, ViewModel, Navigation, Room, Coroutines + Flow, Coil.
+There are Jetpack Compose, ViewModel, Navigation, Room, Coroutines + Flow, Coil, GitHub CI.
 Tech Plans:
   * Hilt
   * Crashlytics
   * Maps (OSM or Google, haven't decided yet)
   * Adopt for different screen sizes
+  * Deeper diving with GitHub CI (how it is only basic build + API KEY selection)
 
 #### Restrictions
 
